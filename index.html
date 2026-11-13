@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,7 +20,11 @@
       --input-bg: #0f1117;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       background: var(--bg);
@@ -32,7 +37,10 @@
       padding: 40px 16px 80px;
     }
 
-    header { text-align: center; margin-bottom: 28px; }
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
 
     header h1 {
       font-size: 2rem;
@@ -43,9 +51,19 @@
       background-clip: text;
     }
 
-    header p { color: var(--muted); margin-top: 6px; font-size: 0.9rem; }
+    header p {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 0.9rem;
+    }
 
-    .pills { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+    .pills {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
 
     .pill {
       display: inline-block;
@@ -57,8 +75,17 @@
       color: var(--muted);
     }
 
-    .pill.green { border-color: rgba(34,197,94,.4); color: #86efac; background: rgba(34,197,94,.08); }
-    .pill.blue  { border-color: rgba(99,102,241,.4); color: #a5b4fc; background: rgba(99,102,241,.08); }
+    .pill.green {
+      border-color: rgba(34, 197, 94, .4);
+      color: #86efac;
+      background: rgba(34, 197, 94, .08);
+    }
+
+    .pill.blue {
+      border-color: rgba(99, 102, 241, .4);
+      color: #a5b4fc;
+      background: rgba(99, 102, 241, .08);
+    }
 
     /* ── Save-method badge ── */
     #saveBadge {
@@ -68,13 +95,21 @@
       font-size: 0.75rem;
       padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(34,197,94,.1);
-      border: 1px solid rgba(34,197,94,.3);
+      background: rgba(34, 197, 94, .1);
+      border: 1px solid rgba(34, 197, 94, .3);
       color: #86efac;
       margin-top: 10px;
     }
-    #saveBadge.active { display: inline-flex; }
-    #saveBadge.warn { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); color: #fcd34d; }
+
+    #saveBadge.active {
+      display: inline-flex;
+    }
+
+    #saveBadge.warn {
+      background: rgba(245, 158, 11, .1);
+      border-color: rgba(245, 158, 11, .3);
+      color: #fcd34d;
+    }
 
     .card {
       background: var(--card);
@@ -95,7 +130,10 @@
       font-size: 0.72rem;
     }
 
-    .url-row { display: flex; gap: 8px; }
+    .url-row {
+      display: flex;
+      gap: 8px;
+    }
 
     input[type="text"] {
       flex: 1;
@@ -108,10 +146,21 @@
       outline: none;
       transition: border-color 0.2s;
     }
-    input[type="text"]:focus { border-color: var(--accent); }
-    input[type="text"]::placeholder { color: var(--muted); }
 
-    .options-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--muted);
+    }
+
+    .options-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
 
     select {
       background: var(--input-bg);
@@ -125,8 +174,14 @@
       flex: 1;
       min-width: 180px;
     }
-    select:focus { border-color: var(--accent); }
-    select option { background: #1a1d27; }
+
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    select option {
+      background: #1a1d27;
+    }
 
     button {
       padding: 10px 22px;
@@ -139,9 +194,19 @@
       white-space: nowrap;
     }
 
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
     /* ── Status bar ── */
     .status-bar {
@@ -157,16 +222,47 @@
       margin-bottom: 12px;
     }
 
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .dot-loading { background: var(--warn); animation: pulse 1s infinite; }
-    .dot-ready   { background: var(--success); }
-    .dot-error   { background: var(--danger); }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
 
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .dot-loading {
+      background: var(--warn);
+      animation: pulse 1s infinite;
+    }
+
+    .dot-ready {
+      background: var(--success);
+    }
+
+    .dot-error {
+      background: var(--danger);
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .3
+      }
+    }
 
     /* ── Progress ── */
-    .progress-wrap { margin-top: 12px; display: none; }
-    .progress-wrap.active { display: block; }
+    .progress-wrap {
+      margin-top: 12px;
+      display: none;
+    }
+
+    .progress-wrap.active {
+      display: block;
+    }
 
     .progress-label {
       display: flex;
@@ -200,6 +296,7 @@
       color: var(--muted);
       margin-top: 10px;
     }
+
     .mem-bar-bg {
       flex: 1;
       margin: 0 10px;
@@ -208,6 +305,7 @@
       height: 4px;
       overflow: hidden;
     }
+
     .mem-bar-fill {
       height: 100%;
       border-radius: 999px;
@@ -215,9 +313,18 @@
       transition: width 0.5s;
       width: 0%;
     }
-    .mem-bar-fill.ok   { background: var(--success); }
-    .mem-bar-fill.warn { background: var(--warn); }
-    .mem-bar-fill.crit { background: var(--danger); }
+
+    .mem-bar-fill.ok {
+      background: var(--success);
+    }
+
+    .mem-bar-fill.warn {
+      background: var(--warn);
+    }
+
+    .mem-bar-fill.crit {
+      background: var(--danger);
+    }
 
     /* ── Log ── */
     .log {
@@ -238,14 +345,23 @@
     /* ── Result ── */
     .result-box {
       display: none;
-      background: rgba(34,197,94,.08);
-      border: 1px solid rgba(34,197,94,.3);
+      background: rgba(34, 197, 94, .08);
+      border: 1px solid rgba(34, 197, 94, .3);
       border-radius: 8px;
       padding: 16px;
       margin-top: 12px;
     }
-    .result-box.active { display: block; }
-    .result-box h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--success); }
+
+    .result-box.active {
+      display: block;
+    }
+
+    .result-box h3 {
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      color: var(--success);
+    }
+
     .result-box .file-name {
       font-size: 0.8rem;
       color: var(--muted);
@@ -265,7 +381,10 @@
       border: none;
       cursor: pointer;
     }
-    .btn-save:hover { opacity: 0.88; }
+
+    .btn-save:hover {
+      opacity: 0.88;
+    }
 
     /* ── Compatibility info ── */
     .info-grid {
@@ -284,16 +403,35 @@
       line-height: 1.6;
     }
 
-    .info-item .label { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: .05em; }
-    .info-item .value { color: var(--text); font-weight: 600; margin-top: 2px; }
-    .info-item .value.ok   { color: var(--success); }
-    .info-item .value.warn { color: var(--warn); }
-    .info-item .value.no   { color: var(--danger); }
+    .info-item .label {
+      color: var(--muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .info-item .value {
+      color: var(--text);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .info-item .value.ok {
+      color: var(--success);
+    }
+
+    .info-item .value.warn {
+      color: var(--warn);
+    }
+
+    .info-item .value.no {
+      color: var(--danger);
+    }
 
     /* ── Warning banner ── */
     .warning {
-      background: rgba(245,158,11,.08);
-      border: 1px solid rgba(245,158,11,.3);
+      background: rgba(245, 158, 11, .08);
+      border: 1px solid rgba(245, 158, 11, .3);
       border-radius: 8px;
       padding: 12px 16px;
       font-size: 0.82rem;
@@ -303,19 +441,94 @@
       width: 100%;
       margin-bottom: 20px;
     }
-    .warning strong { color: var(--warn); }
+
+    .warning strong {
+      color: var(--warn);
+    }
+
     .warning code {
-      background: rgba(0,0,0,.3);
+      background: rgba(0, 0, 0, .3);
       padding: 1px 5px;
       border-radius: 4px;
       font-size: 0.75rem;
     }
 
-    footer { margin-top: 36px; color: var(--muted); font-size: 0.75rem; text-align: center; }
-    footer a { color: #818cf8; text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
+    footer {
+      margin-top: 36px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    footer a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Proxy status ── */
+    .proxy-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .proxy-row input {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .proxy-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      background: #12151f;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .proxy-status.ok {
+      border-color: rgba(34, 197, 94, .4);
+      color: #86efac;
+      background: rgba(34, 197, 94, .07);
+    }
+
+    .proxy-status.fail {
+      border-color: rgba(239, 68, 68, .4);
+      color: #fca5a5;
+      background: rgba(239, 68, 68, .07);
+    }
+
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 0.8rem;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+
+    .btn-sm:hover {
+      opacity: .85;
+    }
+
+    .btn-ping {
+      background: #334155;
+      color: var(--text);
+    }
   </style>
 </head>
+
 <body>
 
   <header>
@@ -336,6 +549,23 @@
     Large files (&gt;500 MB) are streamed directly to disk using the
     <strong>File System Access API</strong> (Chrome/Edge) or <strong>StreamSaver.js</strong> (Firefox fallback)
     — no RAM buffering.
+  </div>
+
+  <!-- Proxy config -->
+  <div class="card">
+    <h2>🔌 CORS Proxy</h2>
+    <div class="proxy-row">
+      <input type="text" id="proxyInput" value="http://localhost:8787/" placeholder="http://localhost:8787/" />
+      <button class="btn-sm btn-ping" onclick="pingProxy()">🏓 Test Proxy</button>
+    </div>
+    <div class="proxy-status" id="proxyStatus">
+      <span>⬤</span> <span id="proxyStatusText">Not tested — click "Test Proxy" or start a download.</span>
+    </div>
+    <div style="margin-top:10px; font-size:0.78rem; color:var(--muted); line-height:1.7;">
+      Start the local proxy first: &nbsp;
+      <code style="background:#0a0c14;padding:2px 7px;border-radius:4px;color:#7dd3fc;">node proxy.mjs</code>
+      &nbsp;in the project folder. Keep that terminal open while downloading.
+    </div>
   </div>
 
   <!-- URL Input -->
@@ -401,7 +631,9 @@
       <!-- Memory usage meter -->
       <div class="mem-row" id="memRow" style="display:none">
         <span>RAM used</span>
-        <div class="mem-bar-bg"><div class="mem-bar-fill" id="memFill"></div></div>
+        <div class="mem-bar-bg">
+          <div class="mem-bar-fill" id="memFill"></div>
+        </div>
         <span id="memLabel">—</span>
       </div>
     </div>
@@ -431,21 +663,55 @@
 
   <script type="module">
     // ─── DOM refs ────────────────────────────────────────────────────────────────
-    const $  = id => document.getElementById(id);
-    const statusDot     = $('statusDot');
-    const statusText    = $('statusText');
-    const logEl         = $('logOutput');
-    const downloadBtn   = $('downloadBtn');
-    const progressWrap  = $('progressWrap');
-    const progressFill  = $('progressFill');
-    const progressPct   = $('progressPct');
+    const $ = id => document.getElementById(id);
+    const statusDot = $('statusDot');
+    const statusText = $('statusText');
+    const logEl = $('logOutput');
+    const downloadBtn = $('downloadBtn');
+    const progressWrap = $('progressWrap');
+    const progressFill = $('progressFill');
+    const progressPct = $('progressPct');
     const progressLabel = $('progressLabel');
-    const resultBox     = $('resultBox');
+    const resultBox = $('resultBox');
     const resultFileName = $('resultFileName');
-    const resultAction  = $('resultAction');
-    const memRow        = $('memRow');
-    const memFill       = $('memFill');
-    const memLabel      = $('memLabel');
+    const resultAction = $('resultAction');
+    const memRow = $('memRow');
+    const memFill = $('memFill');
+    const memLabel = $('memLabel');
+    const proxyInput = $('proxyInput');
+    const proxyStatus = $('proxyStatus');
+    const proxyStatusText = $('proxyStatusText');
+
+    // ─── Proxy helpers ───────────────────────────────────────────────────────────
+    function getProxyURL() {
+      let v = proxyInput.value.trim();
+      if (!v) v = 'http://localhost:8787/';
+      if (!v.endsWith('/')) v += '/';
+      return v;
+    }
+
+    function setProxyStatus(ok, msg) {
+      proxyStatus.className = 'proxy-status ' + (ok === true ? 'ok' : ok === false ? 'fail' : '');
+      proxyStatusText.textContent = msg;
+    }
+
+    window.pingProxy = async function () {
+      const base = getProxyURL();
+      setProxyStatus(null, `Testing ${base}ping …`);
+      try {
+        const res = await fetch(base + 'ping', { signal: AbortSignal.timeout(4000) });
+        const json = await res.json();
+        if (json.ok) {
+          setProxyStatus(true, `✅ Proxy reachable at ${base}  (port ${json.port})`);
+          return true;
+        }
+        setProxyStatus(false, `⚠ Proxy responded but returned unexpected data.`);
+        return false;
+      } catch (e) {
+        setProxyStatus(false, `❌ Cannot reach proxy at ${base} — is "node proxy.mjs" running?`);
+        return false;
+      }
+    };
 
     // ─── Utilities ───────────────────────────────────────────────────────────────
     function log(msg) {
@@ -483,7 +749,7 @@
 
     // ─── Capability detection ────────────────────────────────────────────────────
     const HAS_FSA = typeof window.showSaveFilePicker === 'function';
-    const HAS_SW  = 'serviceWorker' in navigator;
+    const HAS_SW = 'serviceWorker' in navigator;
 
     // Rough free-RAM estimate via performance.memory (Chrome only)
     function estimateFreeRAM() {
@@ -493,49 +759,49 @@
     }
 
     function setSaveMethod() {
-      const saveEl  = $('capSave');
-      const fsaEl   = $('capFSA');
-      const swEl    = $('capSW');
-      const ramEl   = $('capRAM');
-      const pill    = $('saveMethodPill');
-      const badge   = $('saveBadge');
+      const saveEl = $('capSave');
+      const fsaEl = $('capFSA');
+      const swEl = $('capSW');
+      const ramEl = $('capRAM');
+      const pill = $('saveMethodPill');
+      const badge = $('saveBadge');
 
       fsaEl.textContent = HAS_FSA ? 'Supported ✓' : 'Not available';
-      fsaEl.className   = 'value ' + (HAS_FSA ? 'ok' : 'no');
+      fsaEl.className = 'value ' + (HAS_FSA ? 'ok' : 'no');
 
       swEl.textContent = HAS_SW ? 'Supported ✓' : 'Not available';
-      swEl.className   = 'value ' + (HAS_SW ? 'ok' : 'warn');
+      swEl.className = 'value ' + (HAS_SW ? 'ok' : 'warn');
 
       const freeRAM = estimateFreeRAM();
       if (freeRAM !== null) {
         ramEl.textContent = '~' + fmt(freeRAM);
-        ramEl.className   = 'value ' + (freeRAM > 500 * 1024 ** 2 ? 'ok' : 'warn');
+        ramEl.className = 'value ' + (freeRAM > 500 * 1024 ** 2 ? 'ok' : 'warn');
       } else {
         ramEl.textContent = 'Unknown (non-Chrome)';
-        ramEl.className   = 'value warn';
+        ramEl.className = 'value warn';
       }
 
       if (HAS_FSA) {
         saveEl.textContent = '🌊 Stream → Disk (FSA)';
-        saveEl.className   = 'value ok';
-        pill.textContent   = '🌊 Streams to disk (FSA)';
-        pill.className     = 'pill green';
-        badge.textContent  = '🌊 File System Access API — unlimited file size, zero RAM buffering';
-        badge.className    = 'active';
+        saveEl.className = 'value ok';
+        pill.textContent = '🌊 Streams to disk (FSA)';
+        pill.className = 'pill green';
+        badge.textContent = '🌊 File System Access API — unlimited file size, zero RAM buffering';
+        badge.className = 'active';
       } else if (HAS_SW) {
         saveEl.textContent = '🔀 Stream → Disk (StreamSaver)';
-        saveEl.className   = 'value ok';
-        pill.textContent   = '🔀 Streams to disk (StreamSaver)';
-        pill.className     = 'pill green';
-        badge.textContent  = '🔀 StreamSaver.js (Service Worker) — large files supported';
-        badge.className    = 'active';
+        saveEl.className = 'value ok';
+        pill.textContent = '🔀 Streams to disk (StreamSaver)';
+        pill.className = 'pill green';
+        badge.textContent = '🔀 StreamSaver.js (Service Worker) — large files supported';
+        badge.className = 'active';
       } else {
         saveEl.textContent = '⚠ RAM Buffer (Blob URL)';
-        saveEl.className   = 'value warn';
-        pill.textContent   = '⚠ RAM buffer (small files only)';
-        pill.className     = 'pill';
-        badge.textContent  = '⚠ No streaming support — files are buffered in RAM. Keep downloads under 500 MB.';
-        badge.className    = 'active warn';
+        saveEl.className = 'value warn';
+        pill.textContent = '⚠ RAM buffer (small files only)';
+        pill.className = 'pill';
+        badge.textContent = '⚠ No streaming support — files are buffered in RAM. Keep downloads under 500 MB.';
+        badge.className = 'active warn';
       }
     }
 
@@ -613,7 +879,7 @@
     function saveWithBlob(data, filename, mimeType) {
       log('⚠ Save method: Blob URL (file buffered in RAM — suitable for small files only)');
       const blob = new Blob([data], { type: mimeType || 'application/octet-stream' });
-      const url  = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
       log(`✅ Blob URL created (${fmt(blob.size)})`);
       return { url, filename, size: blob.size };
     }
@@ -643,10 +909,10 @@
         log('Creating yt-dlp instance (downloads Pyodide on first run, cached after)…');
         setStatus('Loading yt-dlp WebAssembly modules… please wait (30–60 s first run)', 'loading');
 
-        ytdlp = await createYtDlp({
-          // Set your CORS proxy here if needed:
-          // corsProxy: 'https://your-cors-proxy.workers.dev/'
-        });
+        const proxyURL = getProxyURL();
+        log(`CORS proxy: ${proxyURL}`);
+
+        ytdlp = await createYtDlp({ corsProxy: proxyURL });
 
         setStatus('Ready — paste a URL and hit Download', 'ready');
         downloadBtn.disabled = false;
@@ -713,7 +979,7 @@
         if (blobDesc) {
           // Blob URL path — show download link
           const a = document.createElement('a');
-          a.href     = blobDesc.url;
+          a.href = blobDesc.url;
           a.download = blobDesc.filename;
           a.className = 'btn-save';
           a.textContent = `💾 Save File (${fmt(blobDesc.size)})`;
@@ -751,8 +1017,19 @@
       if (e.key === 'Enter' && !downloadBtn.disabled) window.startDownload();
     });
 
-    // Boot
+    // Re-init if proxy URL changes
+    proxyInput.addEventListener('change', () => {
+      ytdlp = null;
+      downloadBtn.disabled = true;
+      setStatus('Proxy changed — reinitializing…', 'loading');
+      log('Proxy URL changed, reinitializing yt-dlp WASM…');
+      initWasm();
+    });
+
+    // Boot — ping proxy first, then load WASM in parallel
+    pingProxy();
     initWasm();
   </script>
 </body>
+
 </html>
