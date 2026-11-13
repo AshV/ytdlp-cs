@@ -703,6 +703,15 @@
     window.pingProxy = async function () {
       const base = getProxyURL();
       setProxyStatus(null, `Testing ${base}ping …`);
+
+      // Mixed-content guard: HTTPS page → HTTP proxy = blocked by browser
+      if (location.protocol === 'https:' && base.startsWith('http://')) {
+        setProxyStatus(false,
+          '❌ Mixed content blocked — your page is HTTPS but the proxy is HTTP. ' +
+          'Either serve the page over HTTP (run locally via node proxy.mjs) or deploy an HTTPS proxy.');
+        return false;
+      }
+
       try {
         const res = await fetch(base + 'ping', { signal: AbortSignal.timeout(4000) });
         const json = await res.json();
@@ -905,6 +914,42 @@
 
     // ─── Init yt-dlp-wasm ────────────────────────────────────────────────────────
     let ytdlp = null;
+
+    /**
+     * Monkey-patch window.Worker so cross-origin module workers (from esm.sh CDN)
+     * are wrapped in a same-origin blob: URL.
+     *
+     * Why needed: Browsers block `new Worker('https://other-origin/...')` unless that
+     * origin sends the right CORS headers AND a "Service-Worker-Allowed" header.
+     * esm.sh does not send those headers for worker scripts.
+     *
+     * Fix: create a tiny blob script that just `import`s the real CDN URL.
+     * The blob: URL inherits the page's origin, satisfying the same-origin check.
+     */
+    (function patchCrossOriginWorker() {
+      const _Worker = window.Worker;
+      window.Worker = function (url, options = {}) {
+        const isModule      = options.type === 'module';
+        const isCrossOrigin = typeof url === 'string' &&
+                              !url.startsWith(location.origin) &&
+                              !url.startsWith('blob:');
+        if (isModule && isCrossOrigin) {
+          // Blob that simply re-exports the real module — same-origin, CDN loads fine
+          const bootstrap = new Blob(
+            [`import '${url}';`],
+            { type: 'application/javascript' }
+          );
+          const blobURL = URL.createObjectURL(bootstrap);
+          const w = new _Worker(blobURL, options);
+          // Revoke after a tick — the Worker has already started loading it
+          setTimeout(() => URL.revokeObjectURL(blobURL), 0);
+          return w;
+        }
+        return new _Worker(url, options);
+      };
+      // Copy static properties (Worker.prototype etc.)
+      Object.setPrototypeOf(window.Worker, _Worker);
+    })();
 
     async function initWasm() {
       try {
