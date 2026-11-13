@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yt-dlp WASM – Client-Side Downloader</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --border: #2a2d3e;
+      --accent: #6366f1;
+      --accent-hover: #4f52d4;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --input-bg: #0f1117;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 80px;
+    }
+
+    header { text-align: center; margin-bottom: 28px; }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #6366f1, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p { color: var(--muted); margin-top: 6px; font-size: 0.9rem; }
+
+    .pills { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+
+    .pill {
+      display: inline-block;
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .pill.green { border-color: rgba(34,197,94,.4); color: #86efac; background: rgba(34,197,94,.08); }
+    .pill.blue  { border-color: rgba(99,102,241,.4); color: #a5b4fc; background: rgba(99,102,241,.08); }
+
+    /* ── Save-method badge ── */
+    #saveBadge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(34,197,94,.1);
+      border: 1px solid rgba(34,197,94,.3);
+      color: #86efac;
+      margin-top: 10px;
+    }
+    #saveBadge.active { display: inline-flex; }
+    #saveBadge.warn { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); color: #fcd34d; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.72rem;
+    }
+
+    .url-row { display: flex; gap: 8px; }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: var(--muted); }
+
+    .options-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+
+    select {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+      cursor: pointer;
+      flex: 1;
+      min-width: 180px;
+    }
+    select:focus { border-color: var(--accent); }
+    select option { background: #1a1d27; }
+
+    button {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #12151f;
+      border: 1px solid var(--border);
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-loading { background: var(--warn); animation: pulse 1s infinite; }
+    .dot-ready   { background: var(--success); }
+    .dot-error   { background: var(--danger); }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── Progress ── */
+    .progress-wrap { margin-top: 12px; display: none; }
+    .progress-wrap.active { display: block; }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .progress-bar-bg {
+      background: #12151f;
+      border-radius: 999px;
+      height: 7px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), #a78bfa);
+      transition: width 0.25s;
+      width: 0%;
+    }
+
+    /* ── Memory meter ── */
+    .mem-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .mem-bar-bg {
+      flex: 1;
+      margin: 0 10px;
+      background: #12151f;
+      border-radius: 999px;
+      height: 4px;
+      overflow: hidden;
+    }
+    .mem-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--warn);
+      transition: width 0.5s;
+      width: 0%;
+    }
+    .mem-bar-fill.ok   { background: var(--success); }
+    .mem-bar-fill.warn { background: var(--warn); }
+    .mem-bar-fill.crit { background: var(--danger); }
+
+    /* ── Log ── */
+    .log {
+      background: #0a0c14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.77rem;
+      color: #7dd3fc;
+      max-height: 190px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-top: 12px;
+    }
+
+    /* ── Result ── */
+    .result-box {
+      display: none;
+      background: rgba(34,197,94,.08);
+      border: 1px solid rgba(34,197,94,.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    .result-box.active { display: block; }
+    .result-box h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--success); }
+    .result-box .file-name {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+      word-break: break-all;
+    }
+
+    .btn-save {
+      background: var(--success);
+      color: #0f1117;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-save:hover { opacity: 0.88; }
+
+    /* ── Compatibility info ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .info-item {
+      background: #12151f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+
+    .info-item .label { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: .05em; }
+    .info-item .value { color: var(--text); font-weight: 600; margin-top: 2px; }
+    .info-item .value.ok   { color: var(--success); }
+    .info-item .value.warn { color: var(--warn); }
+    .info-item .value.no   { color: var(--danger); }
+
+    /* ── Warning banner ── */
+    .warning {
+      background: rgba(245,158,11,.08);
+      border: 1px solid rgba(245,158,11,.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      color: #fbbf24;
+      line-height: 1.6;
+      max-width: 680px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .warning strong { color: var(--warn); }
+    .warning code {
+      background: rgba(0,0,0,.3);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+
+    footer { margin-top: 36px; color: var(--muted); font-size: 0.75rem; text-align: center; }
+    footer a { color: #818cf8; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>⬇ yt-dlp WASM</h1>
+    <p>Download media directly in your browser — no server, no install.</p>
+    <div class="pills">
+      <span class="pill blue">WebAssembly + Pyodide</span>
+      <span class="pill green" id="saveMethodPill">Detecting save method…</span>
+    </div>
+    <div id="saveBadge"></div>
+  </header>
+
+  <!-- Compatibility notice -->
+  <div class="warning">
+    <strong>⚠ Requirements:</strong>
+    Needs <strong>Chrome 137+</strong> or <strong>Firefox 133+</strong> for WebAssembly JSPI.
+    Older Chrome: enable <code>chrome://flags/#enable-javascript-promise-integration</code>.
+    Large files (&gt;500 MB) are streamed directly to disk using the
+    <strong>File System Access API</strong> (Chrome/Edge) or <strong>StreamSaver.js</strong> (Firefox fallback)
+    — no RAM buffering.
+  </div>
+
+  <!-- URL Input -->
+  <div class="card">
+    <h2>🔗 URL</h2>
+    <div class="url-row">
+      <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=…" />
+      <button class="btn-primary" id="downloadBtn" onclick="startDownload()" disabled>
+        Download
+      </button>
+    </div>
+    <div class="options-row">
+      <select id="formatSelect">
+        <option value="bestaudio/best">Best Audio + Video (merged)</option>
+        <option value="bestvideo+bestaudio">Best Video + Best Audio</option>
+        <option value="bestaudio">Audio Only (best)</option>
+        <option value="bestvideo">Video Only (best)</option>
+        <option value="best">Best single file</option>
+        <option value="worst">Smallest file</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Browser capability check -->
+  <div class="card">
+    <h2>🖥 Browser Capabilities</h2>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="label">Save Strategy</div>
+        <div class="value" id="capSave">Detecting…</div>
+      </div>
+      <div class="info-item">
+        <div class="label">File System Access API</div>
+        <div class="value" id="capFSA">Detecting…</div>
+      </div>
+      <div class="info-item">
+        <div class="label">Service Worker</div>
+        <div class="value" id="capSW">Detecting…</div>
+      </div>
+      <div class="info-item">
+        <div class="label">Estimated Free RAM</div>
+        <div class="value" id="capRAM">Detecting…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status + Progress + Log -->
+  <div class="card">
+    <h2>📡 Status</h2>
+    <div class="status-bar">
+      <div class="status-dot dot-loading" id="statusDot"></div>
+      <span id="statusText">Loading Pyodide &amp; yt-dlp WebAssembly modules… (~30–60 s first load)</span>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label">
+        <span id="progressLabel">Downloading…</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <!-- Memory usage meter -->
+      <div class="mem-row" id="memRow" style="display:none">
+        <span>RAM used</span>
+        <div class="mem-bar-bg"><div class="mem-bar-fill" id="memFill"></div></div>
+        <span id="memLabel">—</span>
+      </div>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <h3>✅ Download Complete</h3>
+      <div class="file-name" id="resultFileName"></div>
+      <!-- Button is dynamic — either <a> for blob or <button> for FSA -->
+      <span id="resultAction"></span>
+    </div>
+
+    <div class="log" id="logOutput"></div>
+  </div>
+
+  <footer>
+    Built with <a href="https://github.com/project516/yt-dlp-wasm" target="_blank">@project516/yt-dlp-wasm</a>
+    &nbsp;·&nbsp;
+    Engine: <a href="https://github.com/yt-dlp/yt-dlp" target="_blank">yt-dlp</a>
+    &nbsp;·&nbsp;
+    Runtime: <a href="https://pyodide.org" target="_blank">Pyodide</a>
+    &nbsp;·&nbsp;
+    Streaming: <a href="https://github.com/jimmywarting/StreamSaver.js" target="_blank">StreamSaver.js</a>
+  </footer>
+
+  <!-- StreamSaver (fallback for Firefox / no FSA) -->
+  <script src="https://cdn.jsdelivr.net/npm/streamsaver@2.0.6/StreamSaver.min.js"></script>
+
+  <script type="module">
+    // ─── DOM refs ────────────────────────────────────────────────────────────────
+    const $  = id => document.getElementById(id);
+    const statusDot     = $('statusDot');
+    const statusText    = $('statusText');
+    const logEl         = $('logOutput');
+    const downloadBtn   = $('downloadBtn');
+    const progressWrap  = $('progressWrap');
+    const progressFill  = $('progressFill');
+    const progressPct   = $('progressPct');
+    const progressLabel = $('progressLabel');
+    const resultBox     = $('resultBox');
+    const resultFileName = $('resultFileName');
+    const resultAction  = $('resultAction');
+    const memRow        = $('memRow');
+    const memFill       = $('memFill');
+    const memLabel      = $('memLabel');
+
+    // ─── Utilities ───────────────────────────────────────────────────────────────
+    function log(msg) {
+      const ts = new Date().toLocaleTimeString();
+      logEl.textContent += `[${ts}] ${msg}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function setStatus(msg, state = 'loading') {
+      statusText.textContent = msg;
+      statusDot.className = 'status-dot dot-' + state;
+    }
+
+    function fmt(bytes) {
+      if (!bytes && bytes !== 0) return '?';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 ** 2) return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1024 ** 3) return (bytes / 1024 ** 2).toFixed(2) + ' MB';
+      return (bytes / 1024 ** 3).toFixed(2) + ' GB';
+    }
+
+    function setProgress(downloaded, total) {
+      progressWrap.classList.add('active');
+      if (total) {
+        const pct = Math.min(100, Math.round((downloaded / total) * 100));
+        progressFill.style.width = pct + '%';
+        progressPct.textContent = pct + '%';
+        progressLabel.textContent = `${fmt(downloaded)} / ${fmt(total)}`;
+      } else {
+        progressFill.style.width = '60%';  // indeterminate shimmer
+        progressLabel.textContent = fmt(downloaded) + ' downloaded…';
+        progressPct.textContent = '';
+      }
+    }
+
+    // ─── Capability detection ────────────────────────────────────────────────────
+    const HAS_FSA = typeof window.showSaveFilePicker === 'function';
+    const HAS_SW  = 'serviceWorker' in navigator;
+
+    // Rough free-RAM estimate via performance.memory (Chrome only)
+    function estimateFreeRAM() {
+      const mem = performance?.memory;
+      if (!mem) return null;
+      return mem.jsHeapSizeLimit - mem.usedJSHeapSize;
+    }
+
+    function setSaveMethod() {
+      const saveEl  = $('capSave');
+      const fsaEl   = $('capFSA');
+      const swEl    = $('capSW');
+      const ramEl   = $('capRAM');
+      const pill    = $('saveMethodPill');
+      const badge   = $('saveBadge');
+
+      fsaEl.textContent = HAS_FSA ? 'Supported ✓' : 'Not available';
+      fsaEl.className   = 'value ' + (HAS_FSA ? 'ok' : 'no');
+
+      swEl.textContent = HAS_SW ? 'Supported ✓' : 'Not available';
+      swEl.className   = 'value ' + (HAS_SW ? 'ok' : 'warn');
+
+      const freeRAM = estimateFreeRAM();
+      if (freeRAM !== null) {
+        ramEl.textContent = '~' + fmt(freeRAM);
+        ramEl.className   = 'value ' + (freeRAM > 500 * 1024 ** 2 ? 'ok' : 'warn');
+      } else {
+        ramEl.textContent = 'Unknown (non-Chrome)';
+        ramEl.className   = 'value warn';
+      }
+
+      if (HAS_FSA) {
+        saveEl.textContent = '🌊 Stream → Disk (FSA)';
+        saveEl.className   = 'value ok';
+        pill.textContent   = '🌊 Streams to disk (FSA)';
+        pill.className     = 'pill green';
+        badge.textContent  = '🌊 File System Access API — unlimited file size, zero RAM buffering';
+        badge.className    = 'active';
+      } else if (HAS_SW) {
+        saveEl.textContent = '🔀 Stream → Disk (StreamSaver)';
+        saveEl.className   = 'value ok';
+        pill.textContent   = '🔀 Streams to disk (StreamSaver)';
+        pill.className     = 'pill green';
+        badge.textContent  = '🔀 StreamSaver.js (Service Worker) — large files supported';
+        badge.className    = 'active';
+      } else {
+        saveEl.textContent = '⚠ RAM Buffer (Blob URL)';
+        saveEl.className   = 'value warn';
+        pill.textContent   = '⚠ RAM buffer (small files only)';
+        pill.className     = 'pill';
+        badge.textContent  = '⚠ No streaming support — files are buffered in RAM. Keep downloads under 500 MB.';
+        badge.className    = 'active warn';
+      }
+    }
+
+    setSaveMethod();
+
+    // ─── Memory usage updater (while downloading) ────────────────────────────────
+    let memTimer = null;
+
+    function startMemMonitor() {
+      if (!performance?.memory) return;
+      memRow.style.display = 'flex';
+      memTimer = setInterval(() => {
+        const { usedJSHeapSize, jsHeapSizeLimit } = performance.memory;
+        const pct = Math.round((usedJSHeapSize / jsHeapSizeLimit) * 100);
+        memFill.style.width = pct + '%';
+        memFill.className = 'mem-bar-fill ' + (pct < 50 ? 'ok' : pct < 75 ? 'warn' : 'crit');
+        memLabel.textContent = `${fmt(usedJSHeapSize)} / ${fmt(jsHeapSizeLimit)} (${pct}%)`;
+      }, 800);
+    }
+
+    function stopMemMonitor() {
+      if (memTimer) { clearInterval(memTimer); memTimer = null; }
+    }
+
+    // ─── Save strategies ─────────────────────────────────────────────────────────
+    const CHUNK = 64 * 1024 * 1024; // 64 MB chunks
+
+    /**
+     * Tier 1 — File System Access API (Chrome/Edge 86+)
+     * Streams chunks straight to disk. Zero extra RAM.
+     */
+    async function saveWithFSA(data, filename, mimeType) {
+      log('💾 Save method: File System Access API (streaming to disk)');
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: 'Media file', accept: { [mimeType || 'application/octet-stream']: [] } }],
+      });
+      const writable = await handle.createWritable();
+      let offset = 0;
+      while (offset < data.byteLength) {
+        const slice = data.subarray(offset, offset + CHUNK);
+        await writable.write(slice);
+        offset += CHUNK;
+        log(`  Written ${fmt(Math.min(offset, data.byteLength))} / ${fmt(data.byteLength)}`);
+      }
+      await writable.close();
+      log('✅ File written to disk via FSA.');
+      return null; // no blob URL needed — file is already on disk
+    }
+
+    /**
+     * Tier 2 — StreamSaver.js (Firefox / any browser with Service Worker)
+     * Fakes a server download via SW, streams chunks to disk.
+     */
+    async function saveWithStreamSaver(data, filename) {
+      log('💾 Save method: StreamSaver.js (Service Worker streaming)');
+      const fileStream = window.streamSaver.createWriteStream(filename, { size: data.byteLength });
+      const writer = fileStream.getWriter();
+      let offset = 0;
+      while (offset < data.byteLength) {
+        const slice = data.subarray(offset, offset + CHUNK);
+        await writer.write(slice);
+        offset += CHUNK;
+        log(`  Written ${fmt(Math.min(offset, data.byteLength))} / ${fmt(data.byteLength)}`);
+      }
+      await writer.close();
+      log('✅ File written via StreamSaver.');
+      return null;
+    }
+
+    /**
+     * Tier 3 — Classic Blob URL (last resort, keeps file in RAM)
+     * Works everywhere but limited by available memory.
+     */
+    function saveWithBlob(data, filename, mimeType) {
+      log('⚠ Save method: Blob URL (file buffered in RAM — suitable for small files only)');
+      const blob = new Blob([data], { type: mimeType || 'application/octet-stream' });
+      const url  = URL.createObjectURL(blob);
+      log(`✅ Blob URL created (${fmt(blob.size)})`);
+      return { url, filename, size: blob.size };
+    }
+
+    /**
+     * Smart dispatcher — picks the best available method.
+     * Returns a blob descriptor `{ url, filename, size }` or null (if already saved).
+     */
+    async function smartSave(data, filename, mimeType) {
+      if (HAS_FSA) {
+        return saveWithFSA(data, filename, mimeType);
+      } else if (HAS_SW && window.streamSaver) {
+        return saveWithStreamSaver(data, filename);
+      } else {
+        return saveWithBlob(data, filename, mimeType);
+      }
+    }
+
+    // ─── Init yt-dlp-wasm ────────────────────────────────────────────────────────
+    let ytdlp = null;
+
+    async function initWasm() {
+      try {
+        log('Importing @project516/yt-dlp-wasm via ESM CDN…');
+        const { createYtDlp } = await import('https://esm.sh/@project516/yt-dlp-wasm');
+
+        log('Creating yt-dlp instance (downloads Pyodide on first run, cached after)…');
+        setStatus('Loading yt-dlp WebAssembly modules… please wait (30–60 s first run)', 'loading');
+
+        ytdlp = await createYtDlp({
+          // Set your CORS proxy here if needed:
+          // corsProxy: 'https://your-cors-proxy.workers.dev/'
+        });
+
+        setStatus('Ready — paste a URL and hit Download', 'ready');
+        downloadBtn.disabled = false;
+        log('✅ yt-dlp WASM initialized successfully.');
+      } catch (err) {
+        setStatus('Initialization failed — see log below', 'error');
+        log('❌ INIT ERROR: ' + err.message);
+        console.error(err);
+      }
+    }
+
+    // ─── Download handler ────────────────────────────────────────────────────────
+    window.startDownload = async function () {
+      const url = $('urlInput').value.trim();
+      if (!url) { alert('Please enter a URL.'); return; }
+
+      downloadBtn.disabled = true;
+      progressWrap.classList.remove('active');
+      progressFill.style.width = '0%';
+      resultBox.classList.remove('active');
+      resultAction.innerHTML = '';
+      logEl.textContent = '';
+      startMemMonitor();
+
+      try {
+        // 1 — Extract metadata
+        setStatus('Extracting video metadata…', 'loading');
+        log(`URL: ${url}`);
+        const info = await ytdlp.extractInfo(url);
+        log(`📺 Title:    ${info.title}`);
+        log(`⏱ Duration: ${info.duration}s`);
+        log(`🌐 Uploader: ${info.uploader || 'N/A'}`);
+
+        // 2 — Download into WASM memory
+        const fmt_sel = $('formatSelect').value;
+        setStatus('Downloading media — this may take a while…', 'loading');
+        log(`\nStarting download [format: ${fmt_sel}]…`);
+        log(`Save strategy: ${HAS_FSA ? 'FSA (stream to disk)' : HAS_SW ? 'StreamSaver (stream to disk)' : 'Blob URL (RAM buffer)'}`);
+
+        const [file] = await ytdlp.download(
+          info,
+          { format: fmt_sel },
+          {
+            onProgress: ({ status, downloadedBytes, totalBytes }) => {
+              setProgress(downloadedBytes, totalBytes);
+            }
+          }
+        );
+
+        log(`\n✅ yt-dlp finished. File: ${file.name}  (${fmt(file.data?.byteLength)})`);
+        stopMemMonitor();
+
+        // 3 — Save with best available method
+        setStatus('Saving file to disk…', 'loading');
+        progressFill.style.width = '100%';
+        progressPct.textContent = '100%';
+        progressLabel.textContent = 'Saving…';
+
+        const blobDesc = await smartSave(file.data, file.name, file.mimeType);
+
+        // 4 — Show result
+        resultFileName.textContent = `📁 ${file.name}  ·  ${fmt(file.data?.byteLength)}`;
+
+        if (blobDesc) {
+          // Blob URL path — show download link
+          const a = document.createElement('a');
+          a.href     = blobDesc.url;
+          a.download = blobDesc.filename;
+          a.className = 'btn-save';
+          a.textContent = `💾 Save File (${fmt(blobDesc.size)})`;
+          resultAction.appendChild(a);
+          log(`ℹ File buffered in RAM. Click "Save File" to download.`);
+        } else {
+          // FSA / StreamSaver — already on disk
+          const msg = document.createElement('div');
+          msg.style.cssText = 'color:#86efac;font-size:.85rem;margin-top:4px;';
+          msg.textContent = '✅ File saved directly to disk — no RAM buffer needed.';
+          resultAction.appendChild(msg);
+        }
+
+        resultBox.classList.add('active');
+        setStatus(`Done! "${info.title}" saved successfully.`, 'ready');
+
+      } catch (err) {
+        stopMemMonitor();
+        // User cancelled FSA picker — not an error
+        if (err.name === 'AbortError') {
+          setStatus('Save cancelled by user.', 'ready');
+          log('ℹ Save picker closed by user.');
+        } else {
+          setStatus('Download failed — see log', 'error');
+          log('❌ ERROR: ' + err.message);
+          console.error(err);
+        }
+      } finally {
+        downloadBtn.disabled = false;
+      }
+    };
+
+    // Enter key shortcut
+    $('urlInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !downloadBtn.disabled) window.startDownload();
+    });
+
+    // Boot
+    initWasm();
+  </script>
+</body>
+</html>
