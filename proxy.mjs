@@ -13,7 +13,23 @@
 
 import http  from 'http';
 import https from 'https';
-import { URL } from 'url';
+import fs    from 'fs';
+import path  from 'path';
+import { URL, fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// MIME types for static file serving
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js':   'application/javascript',
+  '.mjs':  'application/javascript',
+  '.css':  'text/css',
+  '.json': 'application/json',
+  '.png':  'image/png',
+  '.ico':  'image/x-icon',
+  '.svg':  'image/svg+xml',
+};
 
 const PORT = process.env.PORT || 8787;
 
@@ -51,6 +67,28 @@ const server = http.createServer((req, res) => {
   if (req.url === '/ping') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ ok: true, proxy: 'yt-dlp-cors-proxy', port: PORT }));
+  }
+
+  // ── Serve static files (index.html, etc.) ───────────────────────────────────
+  // A request is treated as a static file request when it starts with /static/
+  // OR when the URL has no scheme (not a proxy target).
+  const looksLikeProxy = /^\/https?[:\/]/.test(req.url) || /^\/https?%3A/.test(req.url);
+
+  if (!looksLikeProxy) {
+    let filePath = req.url === '/' ? '/index.html' : req.url;
+    // Strip query strings
+    filePath = filePath.split('?')[0];
+    const absPath = path.join(__dirname, filePath);
+    const ext     = path.extname(absPath);
+
+    try {
+      const data = fs.readFileSync(absPath);
+      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+      return res.end(data);
+    } catch {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      return res.end(`Not found: ${filePath}`);
+    }
   }
 
   // ── Parse target URL ─────────────────────────────────────────────────────────
@@ -125,11 +163,11 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log('');
-  console.log('  ✅  yt-dlp CORS proxy running');
-  console.log(`  🔗  http://localhost:${PORT}`);
-  console.log(`  🏓  Health: http://localhost:${PORT}/ping`);
+  console.log('  ✅  yt-dlp CORS proxy + static server running');
+  console.log(`  🌐  Open in browser → http://localhost:${PORT}/`);
+  console.log(`  🏓  Health check    → http://localhost:${PORT}/ping`);
   console.log('');
-  console.log('  Keep this terminal open while using the downloader page.');
+  console.log('  ⚠  Open the URL above — do NOT use the file:// path directly.');
   console.log('  Press Ctrl+C to stop.\n');
 });
 

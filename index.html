@@ -549,6 +549,10 @@
     Large files (&gt;500 MB) are streamed directly to disk using the
     <strong>File System Access API</strong> (Chrome/Edge) or <strong>StreamSaver.js</strong> (Firefox fallback)
     — no RAM buffering.
+    <br/><br/>
+    <strong>⚠ Must be served over HTTP:</strong> Run <code>node proxy.mjs</code> then open
+    <a href="http://localhost:8787/" style="color:#f59e0b;">http://localhost:8787/</a> in your browser.
+    Opening <code>index.html</code> directly as a <code>file://</code> URL will break Web Worker loading.
   </div>
 
   <!-- Proxy config -->
@@ -562,9 +566,10 @@
       <span>⬤</span> <span id="proxyStatusText">Not tested — click "Test Proxy" or start a download.</span>
     </div>
     <div style="margin-top:10px; font-size:0.78rem; color:var(--muted); line-height:1.7;">
-      Start the local proxy first: &nbsp;
+      Start the proxy, then open the page via HTTP — <strong style="color:#fbbf24">do not open index.html directly as a file</strong>:<br/>
       <code style="background:#0a0c14;padding:2px 7px;border-radius:4px;color:#7dd3fc;">node proxy.mjs</code>
-      &nbsp;in the project folder. Keep that terminal open while downloading.
+      &nbsp;then visit &nbsp;
+      <a href="http://localhost:8787/" target="_blank" style="color:#818cf8;">http://localhost:8787/</a>
     </div>
   </div>
 
