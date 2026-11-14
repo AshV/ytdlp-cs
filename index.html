@@ -549,7 +549,7 @@
     Large files (&gt;500 MB) are streamed directly to disk using the
     <strong>File System Access API</strong> (Chrome/Edge) or <strong>StreamSaver.js</strong> (Firefox fallback)
     — no RAM buffering.
-    <br/><br/>
+    <br /><br />
     <strong>⚠ Must be served over HTTP:</strong> Run <code>node proxy.mjs</code> then open
     <a href="http://localhost:8787/" style="color:#f59e0b;">http://localhost:8787/</a> in your browser.
     Opening <code>index.html</code> directly as a <code>file://</code> URL will break Web Worker loading.
@@ -566,7 +566,8 @@
       <span>⬤</span> <span id="proxyStatusText">Not tested — click "Test Proxy" or start a download.</span>
     </div>
     <div style="margin-top:10px; font-size:0.78rem; color:var(--muted); line-height:1.7;">
-      Start the proxy, then open the page via HTTP — <strong style="color:#fbbf24">do not open index.html directly as a file</strong>:<br/>
+      Start the proxy, then open the page via HTTP — <strong style="color:#fbbf24">do not open index.html directly as a
+        file</strong>:<br />
       <code style="background:#0a0c14;padding:2px 7px;border-radius:4px;color:#7dd3fc;">node proxy.mjs</code>
       &nbsp;then visit &nbsp;
       <a href="http://localhost:8787/" target="_blank" style="color:#818cf8;">http://localhost:8787/</a>
@@ -591,6 +592,32 @@
         <option value="best">Best single file</option>
         <option value="worst">Smallest file</option>
       </select>
+    </div>
+  </div>
+
+  <!-- Cookies (bypass bot detection) -->
+  <div class="card">
+    <h2>🍪 Browser Cookies <span
+        style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0">(optional — needed for
+        YouTube)</span></h2>
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;line-height:1.6;">
+      YouTube blocks bot requests. Paste your <strong style="color:var(--text)">cookies.txt</strong> content here so
+      yt-dlp can authenticate using your browser session.
+      Export using <a
+        href="https://chrome.google.com/webstore/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc"
+        target="_blank" style="color:#818cf8">Get cookies.txt LOCALLY</a> (Chrome) or
+      <a href="https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/" target="_blank"
+        style="color:#818cf8">cookies.txt</a> (Firefox).
+      Visit YouTube first, then export — the file starts with <code
+        style="background:#0a0c14;padding:1px 5px;border-radius:4px"># Netscape HTTP Cookie File</code>.
+    </div>
+    <textarea id="cookiesInput"
+      placeholder="# Netscape HTTP Cookie File&#10;.youtube.com	TRUE	/	TRUE	...&#10;Paste your full cookies.txt here…"
+      style="width:100%;height:90px;background:#0a0c14;border:1px solid var(--border);border-radius:8px;
+             padding:10px;color:#7dd3fc;font-family:monospace;font-size:0.75rem;resize:vertical;outline:none;"></textarea>
+    <div style="margin-top:6px;font-size:0.75rem;color:var(--muted)">
+      🔒 Cookies never leave your machine — they go only to <code>localhost:8787</code> and from there directly to
+      YouTube.
     </div>
   </div>
 
@@ -956,7 +983,11 @@
         const proxyURL = getProxyURL();
         log(`CORS proxy: ${proxyURL}`);
 
-        ytdlp = await createYtDlp({ corsProxy: proxyURL });
+        const cookies = $('cookiesInput')?.value?.trim() || undefined;
+        if (cookies) log('🍪 Cookies provided — using authenticated session.');
+        else log('⚠ No cookies provided — YouTube may return 403.');
+
+        ytdlp = await createYtDlp({ corsProxy: proxyURL, cookies });
 
         setStatus('Ready — paste a URL and hit Download', 'ready');
         downloadBtn.disabled = false;
@@ -1067,6 +1098,15 @@
       downloadBtn.disabled = true;
       setStatus('Proxy changed — reinitializing…', 'loading');
       log('Proxy URL changed, reinitializing yt-dlp WASM…');
+      initWasm();
+    });
+
+    // Re-init if cookies change (need new ytdlp instance with new cookies)
+    $('cookiesInput').addEventListener('change', () => {
+      ytdlp = null;
+      downloadBtn.disabled = true;
+      setStatus('Cookies updated — reinitializing…', 'loading');
+      log('Cookies changed, reinitializing yt-dlp WASM with new session…');
       initWasm();
     });
 

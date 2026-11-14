@@ -1,23 +1,26 @@
 /**
- * Local CORS proxy for yt-dlp WASM
- * Forwards browser fetch() requests to external origins, adding CORS headers.
+ * Local CORS proxy + static file server for yt-dlp WASM
  *
  * Usage:
  *   node proxy.mjs            → runs on http://localhost:8787
  *   PORT=9000 node proxy.mjs  → custom port
  *
- * The browser page sends requests as:
- *   http://localhost:8787/<encoded-target-url>
- * The proxy fetches the target and pipes the response back with CORS headers.
+ * Routes:
+ *   GET /                        → serves index.html
+ *   GET /ping                    → health check JSON
+ *   GET /<full-url>              → CORS proxy  (e.g. /https://youtube.com/...)
+ *   GET /?url=<full-url>         → CORS proxy  (query-param format)
+ *   GET /<url-encoded-url>       → CORS proxy  (percent-encoded format)
  */
 
 import http  from 'http';
 import https from 'https';
 import fs    from 'fs';
 import path  from 'path';
-import { URL, fileURLToPath } from 'url';
+import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PORT = process.env.PORT || 8787;
 
 // MIME types for static file serving
 const MIME = {
@@ -31,16 +34,13 @@ const MIME = {
   '.svg':  'image/svg+xml',
 };
 
-const PORT = process.env.PORT || 8787;
-
-// Headers the proxy should NOT forward upstream (hop-by-hop)
+// Headers NOT forwarded upstream (hop-by-hop)
 const HOP_BY_HOP = new Set([
   'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization',
-  'te', 'trailers', 'transfer-encoding', 'upgrade',
-  'host',  // will be replaced with target host
+  'te', 'trailers', 'transfer-encoding', 'upgrade', 'host',
 ]);
 
-// Headers the proxy should NOT send back to the browser
+// Headers NOT sent back to browser (we set our own CORS headers)
 const STRIP_RESPONSE = new Set([
   'access-control-allow-origin',
   'access-control-allow-headers',
@@ -55,6 +55,28 @@ function addCORSHeaders(res) {
   res.setHeader('Access-Control-Expose-Headers','Content-Length, Content-Range, Content-Type');
 }
 
+// Try to parse a string as a URL; return null on failure
+function tryParseURL(str) {
+  try { return new URL(str); } catch { return null; }
+}
+
+// Resolve a target URL from the request, supporting three formats
+function resolveTarget(req) {
+  const parsed = new URL(req.url, 'http://localhost');
+
+  // Format 1: /?url=https://...
+  const qp = parsed.searchParams.get('url');
+  if (qp) return tryParseURL(qp);
+
+  // Format 2 & 3: /https://... or /https%3A%2F%2F...
+  const stripped = req.url.slice(1);
+  if (stripped) {
+    return tryParseURL(decodeURIComponent(stripped)) || tryParseURL(stripped);
+  }
+
+  return null;
+}
+
 const server = http.createServer((req, res) => {
   // ── CORS pre-flight ──────────────────────────────────────────────────────────
   addCORSHeaders(res);
@@ -63,23 +85,24 @@ const server = http.createServer((req, res) => {
     return res.end();
   }
 
-  // ── Health-check endpoint ────────────────────────────────────────────────────
+  // ── Health-check ─────────────────────────────────────────────────────────────
   if (req.url === '/ping') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ ok: true, proxy: 'yt-dlp-cors-proxy', port: PORT }));
   }
 
-  // ── Serve static files (index.html, etc.) ───────────────────────────────────
-  // A request is treated as a static file request when it starts with /static/
-  // OR when the URL has no scheme (not a proxy target).
-  const looksLikeProxy = /^\/https?[:\/]/.test(req.url) || /^\/https?%3A/.test(req.url);
+  // ── Debug: log every request ─────────────────────────────────────────────────
+  console.log(`→ ${req.method} ${req.url}`);
 
-  if (!looksLikeProxy) {
-    let filePath = req.url === '/' ? '/index.html' : req.url;
-    // Strip query strings
-    filePath = filePath.split('?')[0];
-    const absPath = path.join(__dirname, filePath);
-    const ext     = path.extname(absPath);
+  // ── Try to resolve as a proxy target ─────────────────────────────────────────
+  const targetURL = resolveTarget(req);
+
+  if (!targetURL || !['http:', 'https:'].includes(targetURL.protocol)) {
+    // Not a proxy request → serve static file
+    const parsed = new URL(req.url, 'http://localhost');
+    const filePath = parsed.pathname === '/' ? '/index.html' : parsed.pathname;
+    const absPath  = path.join(__dirname, filePath);
+    const ext      = path.extname(absPath);
 
     try {
       const data = fs.readFileSync(absPath);
@@ -91,34 +114,38 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  // ── Parse target URL ─────────────────────────────────────────────────────────
-  // Accepts both:
-  //   /https%3A%2F%2Fexample.com%2Fpath    (URL-encoded)
-  //   /https://example.com/path            (plain, some clients send this)
-  let rawTarget = req.url.slice(1); // strip leading /
-  let targetURL;
-  try {
-    targetURL = new URL(decodeURIComponent(rawTarget));
-  } catch {
-    try {
-      targetURL = new URL(rawTarget);
-    } catch {
-      res.writeHead(400, { 'Content-Type': 'text/plain' });
-      return res.end(`Bad target URL: ${rawTarget}`);
-    }
-  }
+  // ── Proxy request upstream ───────────────────────────────────────────────────
+  console.log(`  ↳ proxy → ${targetURL.href}`);
 
-  if (!['http:', 'https:'].includes(targetURL.protocol)) {
-    res.writeHead(400, { 'Content-Type': 'text/plain' });
-    return res.end('Only http/https targets are allowed.');
-  }
-
-  // ── Build upstream request headers ───────────────────────────────────────────
   const upstreamHeaders = {};
   for (const [k, v] of Object.entries(req.headers)) {
     if (!HOP_BY_HOP.has(k.toLowerCase())) upstreamHeaders[k] = v;
   }
   upstreamHeaders['host'] = targetURL.host;
+
+  // Inject browser-like headers for Google/YouTube bot detection bypass.
+  // These are only set if the client didn't already supply them.
+  const isGoogleDomain = targetURL.hostname.endsWith('google.com') ||
+                         targetURL.hostname.endsWith('youtube.com') ||
+                         targetURL.hostname.endsWith('googlevideo.com') ||
+                         targetURL.hostname.endsWith('ytimg.com');
+
+  if (!upstreamHeaders['user-agent']) {
+    upstreamHeaders['user-agent'] =
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+      '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+  }
+  if (isGoogleDomain) {
+    upstreamHeaders['accept']          ??= 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+    upstreamHeaders['accept-language'] ??= 'en-US,en;q=0.9';
+    upstreamHeaders['accept-encoding'] ??= 'gzip, deflate, br';
+    upstreamHeaders['sec-fetch-site']  ??= 'none';
+    upstreamHeaders['sec-fetch-mode']  ??= 'navigate';
+    upstreamHeaders['sec-fetch-dest']  ??= 'document';
+    // Remove headers that reveal automation
+    delete upstreamHeaders['origin'];
+    delete upstreamHeaders['referer'];
+  }
 
   const options = {
     hostname: targetURL.hostname,
@@ -130,23 +157,15 @@ const server = http.createServer((req, res) => {
 
   const lib = targetURL.protocol === 'https:' ? https : http;
 
-  console.log(`→ ${req.method} ${targetURL.href}`);
-
   const upstream = lib.request(options, (upstreamRes) => {
-    // Strip upstream CORS headers — we set our own
     const responseHeaders = {};
     for (const [k, v] of Object.entries(upstreamRes.headers)) {
       if (!STRIP_RESPONSE.has(k.toLowerCase())) responseHeaders[k] = v;
     }
     addCORSHeaders({ setHeader: (k, v) => { responseHeaders[k] = v; } });
-
     res.writeHead(upstreamRes.statusCode, responseHeaders);
     upstreamRes.pipe(res);
-
-    upstreamRes.on('error', err => {
-      console.error('Upstream response error:', err.message);
-      res.destroy();
-    });
+    upstreamRes.on('error', err => { console.error('Upstream response error:', err.message); res.destroy(); });
   });
 
   upstream.on('error', (err) => {
@@ -157,7 +176,6 @@ const server = http.createServer((req, res) => {
     }
   });
 
-  // Pipe request body (for POST requests)
   req.pipe(upstream);
 });
 
@@ -180,4 +198,3 @@ server.on('error', (err) => {
   }
   process.exit(1);
 });
-
